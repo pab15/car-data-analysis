@@ -9,7 +9,6 @@ https://chico.craigslist.org/search/cto/
 https://chico.craigslist.org/search/cto/?s=120
 https://chico.craigslist.org/search/cto/?s=240
 https://chico.craigslist.org/search/cto/?s=360
-https://chico.craigslist.org/search/cto/?s=480
 https://fresno.craigslist.org/search/cto/
 https://fresno.craigslist.org/search/cto/?s=120
 https://fresno.craigslist.org/search/cto/?s=240
@@ -264,7 +263,6 @@ https://ventura.craigslist.org/search/cto/?s=720
 https://ventura.craigslist.org/search/cto/?s=840
 https://ventura.craigslist.org/search/cto/?s=960
 https://ventura.craigslist.org/search/cto/?s=1080
-https://ventura.craigslist.org/search/cto/?s=1200
 https://visalia.craigslist.org/search/cto/
 https://visalia.craigslist.org/search/cto/?s=120
 https://visalia.craigslist.org/search/cto/?s=240

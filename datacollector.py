@@ -15,7 +15,7 @@ def write_population_data():
     soup = BeautifulSoup(html, 'html.parser')
     data = soup.find_all('table')[0]
     row_count = 0
-    f = open('popdatabycity.csv', 'w')
+    f = open('popdatabycounty.csv', 'w')
     tr_data = data.find_all('tr')
     for row in tr_data:
         columns = row.find_all('td')
@@ -27,15 +27,7 @@ def write_population_data():
                     cell = cell.replace(',', '')
                     f.write(cell + ',')
                 if column_count == 1:
-                    cell = cell.replace(', ', '-')
-                    cell = cell.replace(' and ', '-')
-                    cell = cell.replace('and ', '')
-                    if '(' in cell:
-                        cell = cell.split('(')
-                        cell = cell[1].strip(')')
-                        f.write(cell + ',')
-                    else:
-                        f.write(cell + ',')
+                    f.write(cell + ',')
                 column_count += 1
         f.write('\n')
     f.close()
@@ -45,28 +37,40 @@ def write_to_db(csv_file):
     csv_reader = csv.reader(open_csv, delimiter=',')
     conn = sqlite3.connect('cities.db')
     curs = conn.cursor()
-    curs.execute('''CREATE TABLE IF NOT EXISTS city
-                    (id INTEGER PRIMARY KEY, city STRING, population INTEGER)''')
+    curs.execute('''CREATE TABLE IF NOT EXISTS counties
+                    (id INTEGER PRIMARY KEY, county STRING, county_pop INTEGER)''')
     count = 1
     for row in csv_reader:
-        if row != []:
-            if '-' in row[0]:
-                cities = row[0].split('-')
-                for city in cities:
-                    query = ('''INSERT INTO "city"
-                                VALUES (?,?,?)''')
-                    query_data = (count, str(city), int(row[1]))
-                    curs.execute(query, query_data)
-                    conn.commit()
-                    count += 1
-            else:
-                query = ('''INSERT INTO "city"
-                            VALUES (?,?,?)''')
-                query_data = (count, str(row[0]), int(row[1]))
-                curs.execute(query, query_data)
-                conn.commit()
-                count += 1
+        try:
+            row[1]
+        except:
+            pass
+        else:
+            query = ('''INSERT INTO "counties"
+                        VALUES (?,?,?)''')
+            query_data = (count, row[0], int(row[1]))
+            curs.execute(query, query_data)
+            count += 1
     open_csv.close()
+    conn.commit()
+    conn.close()
+
+def write_total_populations():
+    conn = sqlite3.connect('cities.db')
+    curs = conn.cursor()
+    curs.execute('''SELECT counties FROM "craigslistcounties"''')
+    counties = curs.fetchall()
+    count = 1
+    for countydata in counties:
+        countydata = countydata[0].split(', ')
+        total_pop = 0
+        for county in countydata:
+            curs.execute('''SELECT county_pop FROM "counties"
+                            WHERE county=?''', (county,))
+            curr_pop = curs.fetchone()
+            total_pop += curr_pop[0]
+        curs.execute('''UPDATE craigslistcounties SET population={} WHERE id={}'''.format(total_pop, count))
+        count += 1
     conn.commit()
     conn.close()
 
@@ -138,107 +142,23 @@ def build_db():
                         result_url = curs.fetchone()
                         if result_url:
                             pass
-                        else:
-                            try:
-                                listing_location = str(listing.find('span', attrs = {"class" : "result-hood"}).string)
-                            except:
-                                pass
-                            else:
-                                if listing_location != '':
-                                    listing_location = str(listing.find('span', attrs = {"class" : "result-hood"}).string)
-                                    listing_location = listing_location.strip(')')
-                                    listing_location = listing_location[2:]
-                                    if '/' in listing_location:
-                                        listing_location = listing_location.split('/')
-                                        listing_location = listing_location[0]
-                                        listing_location = listing_location.split()
-                                        for x in range(len(listing_location)):
-                                            first_letter = listing_location[x][0].upper()
-                                            rest = listing_location[x][1:].lower()
-                                            listing_location[x] = str(first_letter) + str(rest)
-                                        sep = ' '
-                                        listing_location = sep.join(listing_location)
-                                    if '(' in listing_location or ')' in listing_location:
-                                        listing_location = listing_location.split('(', 1)[0]
-                                    listing_location = listing_location.split(' ')
-                                    for x in range(len(listing_location)):
-                                        if x != '' or ' ':
-                                            try:
-                                                first_letter = listing_location[x][0].upper()
-                                                rest = listing_location[x][1:].lower()
-                                                listing_location[x] = str(first_letter) + str(rest)
-                                            except:
-                                                pass
-                                            else:
-                                                first_letter = listing_location[x][0].upper()
-                                                rest = listing_location[x][1:].lower()
-                                                listing_location[x] = str(first_letter) + str(rest)
-                                    sep = ' '
-                                    listing_location = sep.join(listing_location)
-                                    if ',' in listing_location:
-                                        listing_location = listing_location.split(',', 1)[0]
-                                    if ' ca' in listing_location:
-                                        listing_location = listing_location.replace(' ca', '')
-                                    if ' Ca' in listing_location:
-                                        listing_location = listing_location.replace(' Ca', '')
-                                    if ' CA' in listing_location:
-                                        listing_location = listing_location.replace(' CA', '')
-                                    if '.ca' in listing_location:
-                                        listing_location = listing_location.replace('.ca', '')
-                                    if 'SW ' in listing_location:
-                                        listing_location = listing_location.replace('SW ', '')
-                                    if ' SW' in listing_location:
-                                        listing_location = listing_location.replace(' SW', '')
-                                    if 'SW' in listing_location:
-                                        listing_location = listing_location.replace('SW', '')
-                                    if 'Sw ' in listing_location:
-                                        listing_location = listing_location.replace('Sw ', '')
-                                    if ' Sw' in listing_location:
-                                        listing_location = listing_location.replace(' Sw', '')
-                                    if 'Sw' in listing_location:
-                                        listing_location = listing_location.replace('Sw', '')
-                                    if 'sw ' in listing_location:
-                                        listing_location = listing_location.replace('sw ', '')
-                                    if ' sw' in listing_location:
-                                        listing_location = listing_location.replace(' sw', '')
-                                    if 'sw' in listing_location:
-                                        listing_location = listing_location.replace('sw', '')
-                                    if 'NW ' in listing_location:
-                                        listing_location = listing_location.replace('NW ', '')
-                                    if ' NW' in listing_location:
-                                        listing_location = listing_location.replace(' NW', '')
-                                    if 'NW' in listing_location:
-                                        listing_location = listing_location.replace('NW', '')
-                                    if 'Nw ' in listing_location:
-                                        listing_location = listing_location.replace('Nw ', '')
-                                    if ' Nw' in listing_location:
-                                        listing_location = listing_location.replace(' Nw', '')
-                                    if 'Nw' in listing_location:
-                                        listing_location = listing_location.replace('Nw', '')
-                                    if 'nw ' in listing_location:
-                                        listing_location = listing_location.replace('nw ', '')
-                                    if ' nw' in listing_location:
-                                        listing_location = listing_location.replace(' nw', '')
-                                    if 'nw' in listing_location:
-                                        listing_location = listing_location.replace('nw', '')
-                                    if ' and ' in listing_location:
-                                        listing_location = listing_location.split(' and ')
-                                        listing_location = listing_location[0]
-                                    curs.execute("""SELECT population FROM "city"
-                                                    WHERE city=?""",
-                                                    (listing_location,))
-                                    result = curs.fetchone()
-                                    if result: 
-                                        location_pop = int(result[0])
-                                        listing_price = str(listing.find('span', attrs = {"class" : "result-price"}).string)
-                                        listing_price = listing_price.replace('$', '')
-                                        if listing_price != '' and listing_price != '0' and listing_price != '1':
-                                            try:
-                                                listing_price = int(listing_price)
-                                            except:
-                                                pass
-                                            else: 
-                                                listing_price = int(listing_price)
+                        else: 
+                            listing_location = listing_url.split('//')[1].split('.')[0]
+                            curs.execute("""SELECT population FROM "craigslistcounties"
+                                            WHERE clregion=?""",
+                                            (listing_location,))
+                            result = curs.fetchone()
+                            if result: 
+                                location_pop = int(result[0])
+                                listing_price = str(listing.find('span', attrs = {"class" : "result-price"}).string)
+                                listing_price = listing_price.replace('$', '')
+                                if listing_price != '' and listing_price != '0' and listing_price != '1':
+                                    try:
+                                        listing_price = int(listing_price)
+                                    except:
+                                        pass
+                                    else: 
+                                        listing_price = int(listing_price)
                                         query = ('''INSERT INTO "listings"
                                                     VALUES (?,?,?,?)''')
                                         query_data = (count, listing_url, listing_price, location_pop)
@@ -248,6 +168,8 @@ def build_db():
     conn.close()
 
 if __name__ == '__main__':
-    write_population_data()
-    # write_to_db('popdatabycity.csv')
-    # build_db()
+    # write_population_data()
+    # write_to_db('popdatabycounty.csv')
+    # write_total_populations()
+    # write_paginated_links()
+    build_db()
