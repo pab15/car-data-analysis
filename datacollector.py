@@ -5,11 +5,11 @@ import urllib
 import sqlite3
 from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
-import pandas as pd
+# import pandas as pd
 
 def write_population_data():
     result = []
-    url = 'https://www.california-demographics.com/cities_by_population'
+    url = 'https://www.california-demographics.com/counties_by_population'
     response = urllib.request.urlopen(url)
     html = response.read()
     soup = BeautifulSoup(html, 'html.parser')
@@ -248,6 +248,6 @@ def build_db():
     conn.close()
 
 if __name__ == '__main__':
-    # write_population_data()
+    write_population_data()
     # write_to_db('popdatabycity.csv')
-    build_db()
+    # build_db()
